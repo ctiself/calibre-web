@@ -58,6 +58,8 @@ import time
 import server
 from reverseproxy import ReverseProxied
 
+global vlogout
+
 try:
     from googleapiclient.errors import HttpError
 except ImportError:
@@ -2361,7 +2363,8 @@ def login():
     if current_user is not None and current_user.is_authenticated:
         return redirect(url_for('index'))
     auth_user = request.headers.get('X-Remote-User')
-    if auth_user and config.config_use_ldap:
+    if auth_user and config.config_use_ldap and not vlogout:
+        vlogout = 0
         user = ub.session.query(ub.User).filter(func.lower(ub.User.nickname) == auth_user.strip().lower()).first()
         login_user(user, remember=True)
         flash(_(u"you are now logged in as: '%(nickname)s'", nickname=user.nickname), category="success")
@@ -2401,9 +2404,9 @@ def login():
 @login_required
 def logout():
     if current_user is not None and current_user.is_authenticated:
-        logout_host = request.headers.get('Host')
+        vlogout = 1
         logout_user()
-    return redirect("https://%servername/yunohost/sso/".replace("%servername", logout_host))
+    return redirect(url_for('login'))
 
 
 @app.route('/remote/login')

@@ -58,7 +58,7 @@ import time
 import server
 from reverseproxy import ReverseProxied
 
-global vlogout
+vlogout = 0
 
 try:
     from googleapiclient.errors import HttpError
@@ -2363,6 +2363,7 @@ def login():
     if current_user is not None and current_user.is_authenticated:
         return redirect(url_for('index'))
     auth_user = request.headers.get('X-Remote-User')
+    global vlogout
     if auth_user and config.config_use_ldap and not vlogout:
         vlogout = 0
         user = ub.session.query(ub.User).filter(func.lower(ub.User.nickname) == auth_user.strip().lower()).first()
@@ -2404,6 +2405,7 @@ def login():
 @login_required
 def logout():
     if current_user is not None and current_user.is_authenticated:
+        global vlogout
         vlogout = 1
         logout_user()
     return redirect(url_for('login'))

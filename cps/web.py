@@ -2360,6 +2360,12 @@ def login():
         return redirect(url_for('basic_configuration'))
     if current_user is not None and current_user.is_authenticated:
         return redirect(url_for('index'))
+    auth_user = request.headers.get('X-Remote-User')
+    if auth_user and config.config_use_ldap:
+        user = ub.session.query(ub.User).filter(func.lower(ub.User.nickname) == auth_user.strip().lower()).first()
+        login_user(user, remember=True)
+        flash(_(u"you are now logged in as: '%(nickname)s'", nickname=user.nickname), category="success")
+        return redirect(url_for("index"))
     if request.method == "POST":
         form = request.form.to_dict()
         user = ub.session.query(ub.User).filter(func.lower(ub.User.nickname) == form['username'].strip().lower()).first()
@@ -2395,8 +2401,9 @@ def login():
 @login_required
 def logout():
     if current_user is not None and current_user.is_authenticated:
+        logout_host = request.headers.get('Host')
         logout_user()
-    return redirect(url_for('login'))
+    return redirect("https://%servername/yunohost/sso/".replace("%servername", logout_host))
 
 
 @app.route('/remote/login')

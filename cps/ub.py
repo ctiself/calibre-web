@@ -148,6 +148,7 @@ class UserBase:
     def __repr__(self):
         return '<User %r>' % self.nickname
 
+#Yunohost Integration - 1
     #Login via LDAP method
     @staticmethod
     def try_login(username, password):
@@ -156,6 +157,7 @@ class UserBase:
              config.config_ldap_dn.replace("%s", username),
              password
         )
+#END Yunohost Integration - 1
 
 # Baseclass for Users in Calibre-Web, settings which are depending on certain users are stored here. It is derived from
 # User Base (all access methods are declared there)
@@ -314,9 +316,11 @@ class Settings(Base):
     config_use_goodreads = Column(Boolean)
     config_goodreads_api_key = Column(String)
     config_goodreads_api_secret = Column(String)
+#Yunohost Integration - 2
     config_use_ldap = Column(Boolean)
     config_ldap_provider_url = Column(String)
     config_ldap_dn = Column(String)
+#END Yunohost Integration - 2
     config_mature_content_tags = Column(String)
     config_logfile = Column(String)
     config_ebookconverter = Column(Integer, default=0)
@@ -390,9 +394,11 @@ class Config:
         self.config_use_goodreads = data.config_use_goodreads
         self.config_goodreads_api_key = data.config_goodreads_api_key
         self.config_goodreads_api_secret = data.config_goodreads_api_secret
+#Yunohost Integration - 3
         self.config_use_ldap = data.config_use_ldap
         self.config_ldap_provider_url = data.config_ldap_provider_url
         self.config_ldap_dn = data.config_ldap_dn
+#END Yunohost Integration - 3
         if data.config_mature_content_tags:
             self.config_mature_content_tags = data.config_mature_content_tags
         else:
@@ -676,6 +682,7 @@ def migrate_Database():
         conn.execute("ALTER TABLE Settings ADD column `config_calibre` String DEFAULT ''")
         session.commit()
     try:
+#Yunohost Integration - 4
         session.query(exists().where(Settings.config_use_ldap)).scalar()
     except exc.OperationalError:
         conn = engine.connect()
@@ -684,6 +691,7 @@ def migrate_Database():
         conn.execute("ALTER TABLE Settings ADD column `config_ldap_dn` String DEFAULT ''")
         session.commit()
     try:
+#END Yunohost Integration - 4
         session.query(exists().where(Settings.config_theme)).scalar()
     except exc.OperationalError:  # Database is not compatible, some rows are missing
         conn = engine.connect()
@@ -799,11 +807,13 @@ else:
     migrate_Database()
     clean_database()
 
+#Yunohost Integration - 5
 #get LDAP connection
 def get_ldap_connection():
     import ldap
     conn = ldap.initialize('ldap://{}'.format(config.config_ldap_provider_url))
     return conn
+#END Yunohost Integration - 5
 
 # Generate global Settings Object accessible from every file
 config = Config()

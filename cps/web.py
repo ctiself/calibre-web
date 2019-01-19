@@ -58,7 +58,10 @@ import time
 import server
 from reverseproxy import ReverseProxied
 
+#Yunohost LDAP integration - 1
 vlogout = 0
+#END Yunohost LDAP integration -1
+
 
 try:
     from googleapiclient.errors import HttpError
@@ -2362,6 +2365,7 @@ def login():
         return redirect(url_for('basic_configuration'))
     if current_user is not None and current_user.is_authenticated:
         return redirect(url_for('index'))
+#Yunohost integration - 2
     auth_user = request.headers.get('X-Remote-User')
     global vlogout
     if auth_user and config.config_use_ldap and not vlogout:
@@ -2370,9 +2374,14 @@ def login():
         login_user(user, remember=True)
         flash(_(u"you are now logged in as: '%(nickname)s'", nickname=user.nickname), category="success")
         return redirect(url_for("index"))
+#END Yunohost integration - 2
     if request.method == "POST":
         form = request.form.to_dict()
         user = ub.session.query(ub.User).filter(func.lower(ub.User.nickname) == form['username'].strip().lower()).first()
+#Yunohost integration - 3
+#        if user and check_password_hash(user.password, form['password']) and user.nickname is not "Guest":
+#END Yunohost integration - 3
+#Yunohost Integration - 4
         if config.config_use_ldap and user:
             import ldap
             try:
@@ -2385,6 +2394,7 @@ def login():
                 app.logger.info('LDAP Login failed for user "' + form['username'] + '" IP-adress: ' + ipAdress)
                 flash(_(u"Wrong Username or Password"), category="error")
         elif user and check_password_hash(user.password, form['password']) and user.nickname is not "Guest":
+#End Yunohost Integration - 4
             login_user(user, remember=True)
             flash(_(u"you are now logged in as: '%(nickname)s'", nickname=user.nickname), category="success")
             return redirect_back(url_for("index"))
@@ -2405,8 +2415,10 @@ def login():
 @login_required
 def logout():
     if current_user is not None and current_user.is_authenticated:
+#Yunohost Integration - 5
         global vlogout
         vlogout = 1
+#End Yunohost integration - 5
         logout_user()
     return redirect(url_for('login'))
 
@@ -3111,7 +3123,8 @@ def configuration_helper(origin):
         if "config_ebookconverter" in to_save:
             content.config_ebookconverter = int(to_save["config_ebookconverter"])
 
-        #LDAP configuratop,
+#Yunohost Integration - 6
+        #LDAP configuration,
         if "config_use_ldap" in to_save and to_save["config_use_ldap"] == "on":
             if not "config_ldap_provider_url" in to_save or not "config_ldap_dn" in to_save:
                 ub.session.commit()
@@ -3125,6 +3138,7 @@ def configuration_helper(origin):
                 content.config_ldap_provider_url = to_save["config_ldap_provider_url"]
                 content.config_ldap_dn = to_save["config_ldap_dn"]
                 db_change = True
+#END Yunohost integration - 6
 
         # Remote login configuration
         content.config_remote_login = ("config_remote_login" in to_save and to_save["config_remote_login"] == "on")
